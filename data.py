@@ -92,7 +92,7 @@ def get_data_loaders(
     # The validation dataset is a split from the train_one_epoch dataset, so we read
     # from the same folder, but we apply the transforms for validation
     valid_data = datasets.ImageFolder(
-        base_path / "valid",
+        base_path / "train",
         # YOUR CODE HERE: add the appropriate transform that you defined in
         # the data_transforms dictionary
         transform=data_transforms["valid"]
@@ -206,43 +206,3 @@ def visualize_one_batch(data_loaders, max_n: int = 5):
         # .item() gets the value contained in a Tensor
         ax.set_title(class_names[labels[idx].item()])
 
-######################################################################################
-#                                     TESTS
-######################################################################################
-import pytest
-
-
-@pytest.fixture(scope="session")
-def data_loaders():
-    return get_data_loaders(batch_size=2, num_workers=0)
-
-
-def test_data_loaders_keys(data_loaders):
-
-    assert set(data_loaders.keys()) == {"train", "valid", "test"}, "The keys of the data_loaders dictionary should be train, valid and test"
-
-
-def test_data_loaders_output_type(data_loaders):
-    # Test the data loaders
-    dataiter = iter(data_loaders["train"])
-    images, labels = dataiter.next()
-
-    assert isinstance(images, torch.Tensor), "images should be a Tensor"
-    assert isinstance(labels, torch.Tensor), "labels should be a Tensor"
-    assert images[0].shape[-1] == 224, "The tensors returned by your dataloaders should be 224x224. Did you " \
-                                       "forget to resize and/or crop?"
-
-
-def test_data_loaders_output_shape(data_loaders):
-    dataiter = iter(data_loaders["train"])
-    images, labels = dataiter.next()
-
-    assert len(images) == 2, f"Expected a batch of size 2, got size {len(images)}"
-    assert (
-        len(labels) == 2
-    ), f"Expected a labels tensor of size 2, got size {len(labels)}"
-
-
-def test_visualize_one_batch(data_loaders):
-
-    visualize_one_batch(data_loaders, max_n=2)
