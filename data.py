@@ -89,6 +89,7 @@ def get_data_loaders(
         # the data_transforms dictionary
         transform=data_transforms["train"]
     )
+    
     # The validation dataset is a split from the train_one_epoch dataset, so we read
     # from the same folder, but we apply the transforms for validation
     valid_data = datasets.ImageFolder(
@@ -121,8 +122,6 @@ def get_data_loaders(
         sampler=train_sampler,
         num_workers=num_workers,
     )
-    
-    print(data_loaders["train"])
     
     data_loaders["valid"] = torch.utils.data.DataLoader(
         # YOUR CODE HERE
@@ -177,7 +176,7 @@ def visualize_one_batch(data_loaders, max_n: int = 5):
     # Then call the .next() method on the iterator you just
     # obtained
     images, labels  = dataiter.next() # YOUR CODE HERE
-
+    
     # Undo the normalization (for visualization purposes)
     mean, std = compute_mean_and_std()
     invTrans = transforms.Compose(
@@ -191,7 +190,8 @@ def visualize_one_batch(data_loaders, max_n: int = 5):
 
     # YOUR CODE HERE:
     # Get class names from the train data loader
-    class_names  = [classes_name.split(".")[1] for classes_name in train_data.classes] # YOUR CODE HERE
+    
+    class_names = data_loaders["train"].dataset.classes # YOUR CODE HERE
 
     # Convert from BGR (the format used by pytorch) to
     # RGB (the format expected by matplotlib)
@@ -206,3 +206,44 @@ def visualize_one_batch(data_loaders, max_n: int = 5):
         # .item() gets the value contained in a Tensor
         ax.set_title(class_names[labels[idx].item()])
 
+######################################################################################
+#                                     TESTS
+######################################################################################
+
+import pytest
+
+@pytest.fixture(scope="session")
+
+def data_loaders():
+    return get_data_loaders(batch_size=2, num_workers=0)
+
+
+def test_data_loaders_keys(data_loaders):
+
+    assert set(data_loaders.keys()) == {"train", "valid", "test"}, "The keys of the data_loaders dictionary should be train, valid and test"
+
+
+def test_data_loaders_output_type(data_loaders):
+    # Test the data loaders
+    dataiter = iter(data_loaders["train"])
+    images, labels = dataiter.next()
+
+    assert isinstance(images, torch.Tensor), "images should be a Tensor"
+    assert isinstance(labels, torch.Tensor), "labels should be a Tensor"
+    assert images[0].shape[-1] == 224, "The tensors returned by your dataloaders should be 224x224. Did you " \
+                                       "forget to resize and/or crop?"
+
+
+def test_data_loaders_output_shape(data_loaders):
+    dataiter = iter(data_loaders["train"])
+    images, labels = dataiter.next()
+
+    assert len(images) == 2, f"Expected a batch of size 2, got size {len(images)}"
+    assert (
+        len(labels) == 2
+    ), f"Expected a labels tensor of size 2, got size {len(labels)}"
+
+
+def test_visualize_one_batch(data_loaders):
+
+    visualize_one_batch(data_loaders, max_n=2)
